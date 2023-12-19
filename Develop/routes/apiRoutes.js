@@ -1,11 +1,11 @@
-const express = require('express');
-const router = express.Router();
+const router = require("express").Router();
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-router.get('/api/notes', (req, res) => {
-    fs.readFile(path.join(__dirname, 'db', 'db.json'), 'utf8', (err, data) => {
+
+router.get('/notes', (req, res) => { console.log('get notes');
+    fs.readFile('./db/db.json',  'utf8', (err, data) => {
       if (err) {
         console.error(err);
         return res.status(500).json({ error: 'Internal Server Error' });
@@ -16,29 +16,23 @@ router.get('/api/notes', (req, res) => {
     });
 });
 
-router.post('/api/notes', (req, res) => {
-    const newNote = req.body;
-    newNote.id = uuidv4();
-
-    fs.readFile(path.join(__dirname, 'db', 'db.json'), 'utf8', (err, data) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ error: 'Internal Server Error' });
-        }
-
-        const notes = JSON.parse(data);
-        notes.push(newNote);
-
-        fs.writeFile(path.join(__dirname, 'db', 'db.json'), JSON.stringify(notes), 'utf8', (err) => {
-            if (err) {
-              console.error(err);
-              return res.status(500).json({ error: 'Internal Server Error' });
-            }
-        
-            res.json(newNote);
-        });
-    });
+router.post('/notes', (req, res) => {
+  let notesData = JSON.parse(fs.readFileSync('./db/db.json', 'utf8'));
+    const newNote = {
+        title: req.body.title,
+        text: req.body.text,
+        id: uuidv4()
+    };
+    notesData.push(newNote);
+    fs.writeFileSync('./db/db.json', JSON.stringify(notesData));
+  
+    res.json(notesData);
 });
 
-
+router.delete("/notes/:id", (req, res) => {
+  let notesData = JSON.parse(fs.readFileSync('./db/db.json', 'utf8'));
+  notesData = notesData.filter((note) => note.id !== req.params.id);
+  fs.writeFileSync('./db/db.json', JSON.stringify(notesData));
+  res.json(notesData);
+});
 module.exports = router;
